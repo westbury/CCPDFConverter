@@ -67,6 +67,8 @@ int nInBuffer = 0;
 /// Error string buffer
 char cErr[MAX_ERR + 1];
 
+// File to write
+TCHAR docName[MAX_PATH];
 // Path to root directory
 TCHAR path[MAX_PATH];
 // Path to selected first level directory
@@ -141,10 +143,12 @@ namespace configuration
 
       // Extract the value (no leading or trailing whitespace allowed)
       begin = s.find_first_not_of( " \f\n\r\t\v", end + 1 );
-      end   = s.find_last_not_of(  " \f\n\r\t\v" ) + 1;
-
-      value = s.substr( begin, end - begin );
-
+	  if (begin == 0xFFFFFFFF) {
+		  value = "";
+	  } else {
+		end   = s.find_last_not_of(  " \f\n\r\t\v" ) + 1;
+		value = s.substr( begin, end - begin );
+	  }
       // Insert the properly extracted (key, value) pair into the map
       d[ key ] = value;
       }
@@ -405,6 +409,7 @@ UINT_PTR CALLBACK SaveDlgCallback(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 }
 
 /// Command line options used by GhostScript
+// Option at index 5 is replaced with actual file before use.
 const char* ARGS[] =
 {
 	"PS2PDF",
@@ -580,6 +585,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					HWND docNameControl = GetDlgItem(hDlg, IDC_EDIT_DOC_NAME);
 					GetWindowText(docNameControl, text, MAX_PATH);
 					combine(fullFileName, path2, text);
+					strcat(fullFileName, ".pdf");
 			}
 
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
@@ -684,6 +690,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	nBuffer = fread(cBuffer, 1, MAX_PATH * 2, fileInput);
 	cBuffer[nBuffer] = EOF;
 
+	myconfigdata2["nBuffer"] = cBuffer;
+	myconfigdata2["nBuffer2"] = cBuffer + 9;
+
 	// Do we have a %%File: starting the buffer?
 	if ((nBuffer > 8) && (strncmp(cBuffer, "%%File: ", 8) == 0))
 	{
@@ -743,6 +752,33 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		}
 	}
 
+	// Look for the title.
+	char* titleKeyword = strstr(cBuffer + 9, "%%Title: ");
+	if (titleKeyword != NULL) {
+		myconfigdata2["titleKeywmord"] = titleKeyword;
+//		std::string * titleX = new std::string(titleKeyword);
+		char * titleStart = titleKeyword + 9;
+		myconfigdata2["titleStart"] = titleStart;
+
+		char * titleEnd = strstr(titleStart, "%%") - 1;
+		int titleLen = titleEnd - titleStart;
+//		int titleLen = strlen(titleStart);
+		memcpy(docName, titleStart, titleLen);
+		docName[titleLen] = 0;
+//		std::string::size_type begin = titleX->find_first_of( " " );
+//		std::string::size_type end = titleX->find_first_of( "\f\n\r\t\v", begin );
+ //       if (begin == std::string::npos) {
+	//		docName[0] = 0;
+		//} else {
+
+      // Extract the key value
+//		std::string F = titleX->substr( begin, end - begin );
+//		F.copy(docName, 100);
+	//	}
+	}
+
+	myconfigdata2["docName"] = docName;
+
 	// Did we find a filename?
 	if (cPath[0] == '\0')
 	{
@@ -771,7 +807,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		HWND OK = GetDlgItem(hDlg, IDOK);
 		EnableWindow(OK, false);
 
-		SetDlgItemText(hDlg, IDC_EDIT_DOC_NAME, cBuffer);
+		SetDlgItemText(hDlg, IDC_EDIT_DOC_NAME, docName);
 
 		ShowWindow(hDlg, nCmdShow);
 
@@ -823,11 +859,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 				bMakeTemp = true;
 
 				// Save the settings
-//		TCHAR writableConfig[MAX_PATH] = { 0 };
-	//	combine(writableConfig, path, _T("CCPDFConverter.ini")); 
-		  std::ofstream f2( writableConfig );
-  f2 << myconfigdata2;
-  f2.close();
+//		  std::ofstream f2( writableConfig );
+//  f2 << myconfigdata2;
+//  f2.close();
 
 
 		// It's possible that if something fails in the process of making a temp file, the bMakeTemp flag
@@ -902,6 +936,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	// Close the sample file (sample file debug mode)
 	fclose(fileInput);
 #endif
+
+			// Now read the writable properties
+		TCHAR writableConfig2[MAX_PATH] = { 0 };
+		combine(writableConfig2, path, _T("CCPDFConverter.ini")); 
+			  std::ofstream f2( writableConfig2 );
+  f2 << myconfigdata2;
+  f2.close();
+
 
 	// Did we get an error?
 	if (strlen(cErr) > 0)
