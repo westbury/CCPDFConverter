@@ -33,7 +33,8 @@
 
 #include <winspool.h>
 #include <tchar.h>
-#include <atlchecked.h>
+//#include <atlchecked.h>
+#include <windows.h>
 
 /// List of driver files
 static LPCTSTR pPrinterFilelist[] =
@@ -60,12 +61,6 @@ static LPCTSTR pPrinterFilelist[] =
 };
 
 #ifdef CC_PDF_CONVERTER
-/// Printer Name
-#define PRINTER_NAME	_T("CC PDF Converter")
-/// Port Name
-#define PORT_NAME		_T("CCPDFPort")
-/// Driver name
-#define DRIVER_NAME		_T("CC PDF Virtual Printer")
 /// Hardware ID
 #define HARDWARE_ID		_T("CCPDFConverter_Driver0101")
 /// Print monitor Name
@@ -117,8 +112,9 @@ bool IsX64()
 /**
 	@param hWnd Handle to the parent window
 */
-CCPDFPrinterInstaller::CCPDFPrinterInstaller(HWND hWnd) : PrinterInstall(PRINTER_NAME, PORT_NAME, DRIVER_NAME, HARDWARE_ID, pPrinterFilelist), m_hWnd(hWnd)
+CCPDFPrinterInstaller::CCPDFPrinterInstaller(HWND hWnd, LPCTSTR lpPrinterName, LPCTSTR lpPortName, LPCTSTR lpDriverName) : PrinterInstall(lpPrinterName, lpPortName, lpDriverName, HARDWARE_ID, pPrinterFilelist), m_hWnd(hWnd)
 {
+	cError[0] = 0; // Clear so we know if a custom message is set.
 	m_bX64 = IsX64();
 }
 
@@ -154,10 +150,12 @@ bool CCPDFPrinterInstaller::IsPrinterInstalled()
 	@param hModule Handle to the module that should be used to retrieve the driver files path from; NULL to use this module
 	@return true if successfully installed, false if failed
 */
-bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule /* = NULL */,  LPTSTR installationPath /*= ""*/)
+bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule, LPTSTR installationPath, LPTSTR userName, LPTSTR internalName)
 {
+	LPTSTR printerName = userName;
+
 	// Retrieve the file path to the module
-	TCHAR cPath[MAX_PATH + 2], cError[2048];
+	TCHAR cPath[MAX_PATH + 2];
 	std::tstring sInstallPath;
 	
 	
@@ -203,7 +201,9 @@ bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule /* = NULL */,  LPTSTR inst
 	if (Install(cPath, m_hWnd) != 0)
 	{
 		// Failed
-		_stprintf_s(cError, _S(cError), _T("Printer installation error %d (%d)"), GetError(), GetLastError());
+		if (cError[0] == 0) {
+			_stprintf_s(cError, _S(cError), _T("Printer installation error %d (%d)"), GetError(), GetLastError());
+		}
 		ShowError(cError);
 		RemovePortMonitor(MONITOR_NAME);
 		return false;
@@ -211,8 +211,15 @@ bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule /* = NULL */,  LPTSTR inst
 
 	// Set up the redmon settings:
 	// Open the key
+
+		TCHAR key[500];
+	_tcscpy_s (key, MAX_PATH, _T("SYSTEM\\CurrentControlSet\\Control\\Print\\Monitors\\") MONITOR_NAME _T("\\Ports\\"));
+	_tcscat_s (key, MAX_PATH, internalName);
+	_tcscat_s (key, MAX_PATH, _T("Port"));
+
 	HKEY hKey;
-	if (::RegCreateKeyEx(HKEY_LOCAL_MACHINE, _T("SYSTEM\\CurrentControlSet\\Control\\Print\\Monitors\\") MONITOR_NAME _T("\\Ports\\" PORT_NAME), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL) != ERROR_SUCCESS)
+//	if (::RegCreateKeyEx(HKEY_LOCAL_MACHINE, _T("SYSTEM\\CurrentControlSet\\Control\\Print\\Monitors\\") MONITOR_NAME _T("\\Ports\\" PORT_NAME), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL) != ERROR_SUCCESS)
+	if (::RegCreateKeyEx(HKEY_LOCAL_MACHINE, key, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, NULL) != ERROR_SUCCESS)
 	{
 		// Can't... fail
 		ShowError(_T("Could not access the port registry settings"));
@@ -276,7 +283,7 @@ bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule /* = NULL */,  LPTSTR inst
 	HANDLE  hPrinter;
 	ZeroMemory(&pd, sizeof(PRINTER_DEFAULTS)); 
 	pd.DesiredAccess = PRINTER_ALL_ACCESS;
-	if (!::OpenPrinter(PRINTER_NAME, &hPrinter, &pd))
+	if (!::OpenPrinter(printerName, &hPrinter, &pd))
 	{
 		ShowError(_T("Could not open the printer for setting paths (1)"));
 		return false;

@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CCPrintInstallDll", "CCPrintInstallDll.vcxproj", "{C6CB48D6-3374-FA53-0CDD-09851C753416}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CCPrintInstallCaller", "..\CCPrintInstallCaller\CCPrintInstallCaller.vcxproj", "{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		XL2PDF Debug|Win32 = XL2PDF Debug|Win32
+		XL2PDF Release|Win32 = XL2PDF Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.Debug|Win32.Build.0 = Debug|Win32
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.Release|Win32.ActiveCfg = Release|Win32
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.Release|Win32.Build.0 = Release|Win32
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.XL2PDF Debug|Win32.ActiveCfg = XL2PDF Debug|Win32
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.XL2PDF Debug|Win32.Build.0 = XL2PDF Debug|Win32
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.XL2PDF Release|Win32.ActiveCfg = XL2PDF Release|Win32
+		{C6CB48D6-3374-FA53-0CDD-09851C753416}.XL2PDF Release|Win32.Build.0 = XL2PDF Release|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.Debug|Win32.Build.0 = Debug|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.Release|Win32.ActiveCfg = Release|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.Release|Win32.Build.0 = Release|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.XL2PDF Debug|Win32.ActiveCfg = Debug|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.XL2PDF Debug|Win32.Build.0 = Debug|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.XL2PDF Release|Win32.ActiveCfg = Release|Win32
+		{B509B59C-E696-4DA7-BE5A-C0B0D7958BE4}.XL2PDF Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

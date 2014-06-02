@@ -303,20 +303,26 @@ bool PrinterInstall::DoCopyFiles(LPCTSTR lpCopyFrom)
 		sTo = ConcatPaths(lpPath, (*i));
 
 		// Now copy
-		if (!::CopyFile(sFrom.c_str(), sTo.c_str(), FALSE))
+		if (!::CopyFile(sFrom.c_str(), sTo.c_str(), TRUE))
 		{
-			SetError(-1202);
+			DWORD error = GetLastError();
+			if (error == 0 && !::CopyFile(sFrom.c_str(), sTo.c_str(), FALSE))
+			{
+				// May be a permissions error or something,
+				// let's ignore
+			} else {
+			SetError(error/*-1202*/);
 			/*TCHAR msg[1024];
 			_tcscpy_s (msg, 1024, "Failed to copy from\n");
 			_tcscat_s (msg, 1024, sFrom.c_str());
 			_tcscat_s (msg, 1024, "\nto\n");
 			_tcscat_s (msg, 1024, sTo.c_str());
 			MessageBox (NULL, msg, _T("Error!"), 0);*/
-
 #ifdef TRACE
 			TRACE(_T("Cannot copy file: %d\n"), GetLastError());
 #endif
 			return false;
+			}
 		}
 	}
 
@@ -437,6 +443,7 @@ bool PrinterInstall::DoInstallPrinterDriver()
 	// Now actually install the driver:
 	if (!::AddPrinterDriver(NULL, 6, (LPBYTE)&info))
 	{
+		DWORD driverError = GetLastError();
 		// Bah!
 		SetError(-1402);
 #ifdef TRACE
@@ -500,6 +507,7 @@ bool PrinterInstall::DoAddPrinter()
 #ifdef TRACE
 		TRACE(_T("AddPrinter failed: %d\n"), GetLastError());
 #endif
+		_stprintf_s(cError, _S(cError), _T("Printer installation failed.  The printer may already exist.  Go to the control panel, printers, delete the printer and try again. %d (%d)"), GetError(), GetLastError());
 		SetError(-1601);
 		return false;
 	}

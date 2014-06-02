@@ -57,6 +57,9 @@ public:
 	/// Default constructor
 	PrinterInstall();
 
+	TCHAR cError[2048];
+
+
 protected:
 	// Members
 	/// Printer name

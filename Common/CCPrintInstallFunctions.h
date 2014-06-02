@@ -37,7 +37,7 @@ class CCPDFPrinterInstaller : public PrinterInstall
 public:
 	// Ctor
 	/// Default constructor
-	CCPDFPrinterInstaller(HWND hWnd);
+	CCPDFPrinterInstaller(HWND hWnd, LPCTSTR lpPrinterName, LPCTSTR lpPortName, LPCTSTR lpDriverName);
 
 protected:
 	// Members
@@ -47,7 +47,7 @@ protected:
 public:
 	// Methods
 	/// CC PDF Printer driver install function
-	bool	DoInstall(HMODULE hModule = NULL, LPTSTR installationPath = "");
+	bool	DoInstall(HMODULE hModule, LPTSTR installationPath, LPTSTR userName, LPTSTR internalName);
 	/// CC PDF Printer driver removal function
 	bool	DoRemove();
 	/// Tests if the CC PDF Printer driver is installed on this system
