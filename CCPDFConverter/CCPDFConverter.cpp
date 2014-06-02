@@ -854,54 +854,19 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		}
 
 						// OK, get a filename, write it up
-				sprintf_s (cFile, sizeof(cFile), "-sOutputFile=%s", fullFileName);
+				sprintf_s (cFile, sizeof(cFile), "-sOutputFile=%s.inprogress", fullFileName);
 				ARGS[5] = cFile;
 				bMakeTemp = true;
+
+#ifdef _DEBUG
+				// Also trace it (debug mode)
+				WriteOutput("FILENAME (USER): ", cFile, strlen(cFile));
+#endif
 
 				// Save the settings
 //		  std::ofstream f2( writableConfig );
 //  f2 << myconfigdata2;
 //  f2.close();
-
-
-		// It's possible that if something fails in the process of making a temp file, the bMakeTemp flag
-		// will be disabled in the above block and then we want to run the following block as usual.
-		if (!bMakeTemp) {
-			// Ask the user for a file name:
-			OPENFILENAME info;
-			memset(&info, 0, sizeof(info));
-			info.lStructSize = sizeof(info);
-			info.hInstance = hInstance;
-			info.lpstrFilter = "PDF Files (*.pdf)\0*.pdf\0All Files (*.*)\0*.*\0\0";
-			info.lpstrFile = cPath;
-			info.nMaxFile = MAX_PATH + 1;
-			info.lpstrTitle = "Select a file to write into";
-			info.Flags = OFN_ENABLESIZING|OFN_EXPLORER|OFN_NOREADONLYRETURN|OFN_OVERWRITEPROMPT|OFN_PATHMUSTEXIST|OFN_ENABLEHOOK;
-			info.lpstrDefExt = "pdf";
-			// We want a hook function to center the window and bring it on top
-			info.lpfnHook = SaveDlgCallback;
-
-			if (GetSaveFileName(&info))
-			{
-				// OK, get a filename, write it up
-				sprintf_s (cFile, sizeof(cFile), "-sOutputFile=%s", cPath);
-				ARGS[5] = cFile;
-#ifdef _DEBUG
-				// Also trace it (debug mode)
-				WriteOutput("FILENAME (USER): ", cPath, strlen(cPath));
-
-
-#endif
-
-
-			}
-			else
-			{
-				// Continue reading until to end so we won't have a problem
-				CleanInput();
-				return 0;
-			}
-		}
 	}
 
 	// First try to initialize a new GhostScript instance
@@ -937,7 +902,19 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	fclose(fileInput);
 #endif
 
-			// Now read the writable properties
+		// Rename the file.
+	// This is done so that directory listeners don't see the PDF file until
+	// it is completely written.
+
+	TCHAR src_file[MAX_PATH + 128];
+				sprintf_s (src_file, sizeof(src_file), "%s.inprogress", fullFileName);
+const char *dest_file = fullFileName;
+ 
+	if (!MoveFileEx(src_file, dest_file, MOVEFILE_REPLACE_EXISTING)) {
+		/* Handle error condition */
+	}
+
+			// Now write the writable properties
 		TCHAR writableConfig2[MAX_PATH] = { 0 };
 		combine(writableConfig2, path, _T("CCPDFConverter.ini")); 
 			  std::ofstream f2( writableConfig2 );
@@ -951,12 +928,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		// Yes, show it
 		MessageBox(NULL, cErr, PRODUCT_NAME, MB_ICONERROR|MB_OK);
 		return 0;
-	}
-
-	// Should we open the file (also make sure there's a handler for PDFs)
-	if (bAutoOpen && CanOpenPDFFiles()) {
-		// Yes, so open it
-		ShellExecute(NULL, NULL, cPath, NULL, NULL, SW_NORMAL);
 	}
 
 
