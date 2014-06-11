@@ -36,7 +36,6 @@
 #define CCPRINT_VERSION_NO_EXTRA	0x00000002L
 
 /// Registry settings
-#define SETTINGS_AUTOOPEN			_T("AutoOpen")
 #define SETTINGS_WRITEPROPERTIES	_T("WriteProperties")
 #define SETTINGS_LICENSELOCATION	_T("LicenseLocation")
 #define SETTINGS_AUTOURLS			_T("AutoURLs")

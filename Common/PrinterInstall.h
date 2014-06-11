@@ -102,7 +102,7 @@ public:
 public:
 	// Methods
 	/// Install the printer driver
-	int			Install(LPCTSTR lpFilesPath, HWND hParent);
+	int			Install(LPCTSTR lpFilesPath, HWND hParent, LPTSTR sInstallPath);
 	/// Remove the printer driver
 	int			Uninstall(HWND hParent);
 	/// Installs or removes the printer driver according to the command line parameters
@@ -129,7 +129,7 @@ protected:
 	/// Remove the printer driver
 	bool		DoUninstallPrinterDriver();
 	/// Add a printer
-	bool		DoAddPrinter();
+	HANDLE		DoAddPrinter();
 	/// Remove the printer
 	bool		DoRemovePrinter(LPTSTR lpName);
 	/// Remove all the printers for this driver

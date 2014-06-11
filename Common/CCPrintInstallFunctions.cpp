@@ -198,7 +198,7 @@ bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule, LPTSTR installationPath, 
 	}
 
 	// Install the actual printer driver
-	if (Install(cPath, m_hWnd) != 0)
+	if (Install(cPath, m_hWnd, installationPath) != 0)
 	{
 		// Failed
 		if (cError[0] == 0) {
@@ -278,6 +278,7 @@ bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule, LPTSTR installationPath, 
 
 	// Also, set up the DB and images paths:
 	// Get the printer handle
+	/*
 	BOOL bRet = FALSE;
 	PRINTER_DEFAULTS  pd;
 	HANDLE  hPrinter;
@@ -294,7 +295,7 @@ bool CCPDFPrinterInstaller::DoInstall(HMODULE hModule, LPTSTR installationPath, 
 	CCPrintRegistry::SetRegistryString(hPrinter, _T("Image Path"), ::ConcatPaths(sInstallPath, _T("Images\\")).c_str());
 	CCPrintRegistry::SetRegistryBool(hPrinter, (LPTSTR)SETTINGS_AUTOOPEN, CanOpenPDFFiles());
 	::ClosePrinter(hPrinter);
-
+	*/
 	return true;
 }
 

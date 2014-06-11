@@ -157,7 +157,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 		case IDM_INSTALL:
 
-			x = InstallPrinter(hWnd, "C:\\Program Files (x86)\\My Apps\\printer", "My App", "MyApp");
+			x = InstallPrinter(hWnd, "C:\\Program Files (x86)\\EZ Bundles\\printer", "EZ Bundle", "EZBundle");
 			/*, LPLONG lpIValue, LPTSTR installPath*/
 
 
@@ -166,7 +166,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDM_UNINSTALL:
 
-			x = RemovePrinter(hWnd, "My App", "MyApp");
+			x = RemovePrinter(hWnd, "EZ Bundle", "EZBundle");
 			/*, LPLONG lpIValue, LPTSTR installPath*/
 
 

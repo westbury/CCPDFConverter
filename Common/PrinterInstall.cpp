@@ -29,6 +29,7 @@
 #include <tchar.h>
 #include "PrinterInstall.h"
 #include <windows.h>
+#include "CCPrintRegistry.h"
 
 // Hard-coded string used while installing
 /// Supported printer driver OS
@@ -484,7 +485,7 @@ bool PrinterInstall::DoUninstallPrinterDriver()
 /**
 	@return true if the printer was added successfully, false if failed
 */
-bool PrinterInstall::DoAddPrinter()
+HANDLE PrinterInstall::DoAddPrinter()
 {
 	// Initialize the data structure
 	PRINTER_INFO_2 pi2;
@@ -509,11 +510,10 @@ bool PrinterInstall::DoAddPrinter()
 #endif
 		_stprintf_s(cError, _S(cError), _T("Printer installation failed.  The printer may already exist.  Go to the control panel, printers, delete the printer and try again. %d (%d)"), GetError(), GetLastError());
 		SetError(-1601);
-		return false;
+		return NULL;
 	}
-	::ClosePrinter(hPrinter);
 
-	return true;
+	return hPrinter;
 }
 
 /**
@@ -647,7 +647,7 @@ bool PrinterInstall::DoRemovePrinters()
 	@param hParent Handle to parent window
 	@return 0 if succeeded, any other number for error
 */
-int PrinterInstall::Install(LPCTSTR lpFilesPath, HWND hParent)
+int PrinterInstall::Install(LPCTSTR lpFilesPath, HWND hParent, LPTSTR sInstallPath)
 {
 	// Reset the errors
 	ResetError();
@@ -688,12 +688,21 @@ int PrinterInstall::Install(LPCTSTR lpFilesPath, HWND hParent)
 	}
 
 	// Finally, add a printer
-	if (!DoAddPrinter())
+	HANDLE hPrinter = DoAddPrinter();
+	if (hPrinter == NULL)
 	{
 		DoUninstallPrinterDriver();
 		DoDeletePort(hParent);
 		return m_nError;
 	}
+
+		// Also, set up the DB and images paths:
+	// Get the printer handle
+	// And set the values
+	CCPrintRegistry::SetRegistryString(hPrinter, _T("DB Path"), ::ConcatPaths(sInstallPath, _T("cc2.db3")).c_str());
+	CCPrintRegistry::SetRegistryString(hPrinter, _T("Image Path"), ::ConcatPaths(sInstallPath, _T("Images\\")).c_str());
+	CCPrintRegistry::SetRegistryBool(hPrinter, _T("AutoOpen"), false);
+	::ClosePrinter(hPrinter);
 
 	return 0;
 }
@@ -787,7 +796,7 @@ bool PrinterInstall::DoCommandLine(int nArgs, TCHAR** pArgs, bool& bNoUI, LPCTST
 					*(pSlash + 1) = '\0';
 					_tcscat_s(cPath, _S(cPath), lpRelativeDriverFolder);
 					// And install
-					Install(cPath, NULL);
+					Install(cPath, NULL, cPath);
 				}
 			}
 			// We did something here
