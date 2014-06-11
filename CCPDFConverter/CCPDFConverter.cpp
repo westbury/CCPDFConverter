@@ -37,6 +37,7 @@
 #include <fstream>      // std::ifstream
 #include <tchar.h>
 #include <strsafe.h>
+#include <shlobj.h>
 
 #include "Userenv.h"
 #pragma comment(lib, "userenv.lib")
@@ -77,6 +78,8 @@ TCHAR path1[MAX_PATH];
 TCHAR path2[MAX_PATH];
 // File to write
 TCHAR fullFileName[MAX_PATH];
+// TRUE of user pressed OK, not sure if we really need this.
+boolean okPressed;
 
 #ifdef _DEBUG
 
@@ -586,6 +589,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					GetWindowText(docNameControl, text, MAX_PATH);
 					combine(fullFileName, path2, text);
 					strcat(fullFileName, ".pdf");
+					okPressed = TRUE;
 			}
 
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
@@ -610,6 +614,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+/*
 void GetUserHomeDir(TCHAR* szHomeDirBuf)
 {
 	HANDLE hToken = 0;
@@ -618,9 +623,26 @@ void GetUserHomeDir(TCHAR* szHomeDirBuf)
 
 	DWORD BufSize = MAX_PATH;
 	result = GetUserProfileDirectory( hToken, szHomeDirBuf, &BufSize );
+
+	boolean result = GetAllUsersProfileDirectory( szHomeDirBuf, &BufSize );
 	_ASSERT(result);
 
 	CloseHandle( hToken );
+}
+*/
+
+void GetPublicDocsDir(TCHAR* szHomeDirBuf)
+{
+	DWORD BufSize = MAX_PATH;
+    HRESULT result = SHGetFolderPath(NULL, CSIDL_COMMON_DOCUMENTS, NULL, SHGFP_TYPE_CURRENT, szHomeDirBuf);
+
+	char * x = strstr(szHomeDirBuf, "\\Documents");
+	*x = 0;
+
+    if (result != S_OK)
+        std::cout << "Error: " << result << "\n";
+    else
+        std::cout << "Path: " << szHomeDirBuf << "\n";
 }
 
 /**
@@ -641,7 +663,15 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 
 	// Read configuration file
-  std::ifstream f( "c:\\CCPDFConverter.ini" );
+	HMODULE hModule = GetModuleHandle(NULL);
+	TCHAR iniPath[MAX_PATH];
+	GetModuleFileName(hModule, iniPath, MAX_PATH);
+//	PathRemoveFileSpec(iniPath, MAX_PATH);
+	char * x = strstr(iniPath, "\\CCPDFConverter.exe");
+	*x = 0;
+	strcat( iniPath, "\\CCPDFConverterMessages.ini" );
+
+  std::ifstream f( iniPath );
   f >> myconfigdata;
   f.close();
 
@@ -800,6 +830,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			}			
 		}
 
+		okPressed = FALSE;
+
 		// Create the dialog
 		HWND hDlg;
 		hDlg = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), 0, DialogProc, 0);
@@ -807,18 +839,33 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		HWND OK = GetDlgItem(hDlg, IDOK);
 		EnableWindow(OK, false);
 
+		SetWindowText(hDlg, title.c_str());
+		SetDlgItemText(hDlg, IDC_LABEL_LEVEL1, level1Text.c_str());
+		SetDlgItemText(hDlg, IDC_LABEL_LEVEL2, level2Text.c_str());
+		SetDlgItemText(hDlg, IDC_LABEL_DOC_NAME, filenameText.c_str());
+		
+		// Find last occurance of " - "
+		TCHAR *ptr = docName;
+		TCHAR *prevptr = NULL;
+		while( (ptr = strstr(ptr, " - ")))
+		{
+			prevptr = ptr;
+			// move pointer to end of match
+			ptr = ptr + 3;
+		}
+		// now, prevptr contains the last occurrence
+		if (prevptr != NULL) {
+			*prevptr = 0;
+		}
+
 		SetDlgItemText(hDlg, IDC_EDIT_DOC_NAME, docName);
 
 		ShowWindow(hDlg, nCmdShow);
 
 
-
-
-
 		TCHAR homeDir[MAX_PATH] = { 0 };
 
-		GetUserHomeDir(homeDir);
-
+		GetPublicDocsDir(homeDir);
 		
 		TCHAR *directoryNameAsTChar=new TCHAR[directoryName.size()+1];
 		directoryNameAsTChar[directoryName.size()]=0;
@@ -852,7 +899,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 				DispatchMessage(&msg); /* send it to dialog procedure */
 			}
 		}
-
+		if (okPressed)
+		{
 						// OK, get a filename, write it up
 				sprintf_s (cFile, sizeof(cFile), "-sOutputFile=%s.inprogress", fullFileName);
 				ARGS[5] = cFile;
@@ -930,6 +978,7 @@ const char *dest_file = fullFileName;
 		return 0;
 	}
 
+	}
 
 	return 0;
 }
